@@ -1,0 +1,647 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ScatterChart,
+  Scatter,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  ComposedChart,
+  Treemap,
+} from "recharts";
+import {
+  BarChart3,
+  TrendingUp,
+  Package,
+  Boxes,
+  AlertTriangle,
+  Truck,
+  Download,
+  RefreshCcw,
+  Filter,
+} from "lucide-react";
+
+const DATA_URL = "https://eu-prod.asyncgw.teams.microsoft.com/v1/objects/0-neu-d4-795098e6783064c9e00e06ee94023abb/views/original/albaranes_dashboard_data.json";
+
+const COLORS = ["#22c55e", "#3b82f6", "#a855f7", "#f59e0b", "#ef4444", "#14b8a6", "#8b5cf6", "#06b6d4", "#84cc16", "#f97316"];
+const BG = "#0b1020";
+const CARD = "#131a2a";
+const GRID = "rgba(148,163,184,0.15)";
+const TEXT = "#e5e7eb";
+const MUTED = "#94a3b8";
+
+const FALLBACK = {
+  metrics: { filas: 448, importe_total: 2651739.88, cantidad_total: 6339758.5, precio_medio_simple: 23.164, precio_medio_ponderado: 0.418271, familias: 9, subfamilias: 51, proveedores: 78, dias: 21, importe_negativo: -30925.4, lineas_negativas: 44, lineas_precio_cero: 25, lineas_importe_cero: 25, lineas_cantidad_negativa: 44 },
+  families: [
+    { familia: "SEMILLAS", importe: 2235543.64, cantidad: 5371000 },
+    { familia: "ABONOS", importe: 147910.04, cantidad: 141430 },
+    { familia: "PLASTICOS", importe: 119870.27, cantidad: 673578.5 },
+    { familia: "FITOSANITARIOS", importe: 106876.18, cantidad: 6610 },
+    { familia: "RIEGO", importe: 22638.41, cantidad: 140260 },
+    { familia: "FERRETERIA", importe: 16804.94, cantidad: 5858 },
+    { familia: "LUCHA INTEGRADA", importe: 1470.58, cantidad: 71 },
+    { familia: "VARIOS", importe: 1051.59, cantidad: 1047 },
+    { familia: "SUSTRATOS", importe: -425.77, cantidad: -96 },
+  ],
+  suppliers_top: [
+    { proveedor: "HAZERA ESPAÑA 90 S.A.U.", importe: 857837.0 },
+    { proveedor: "SYNGENTA ESPAÑA, S.A.", importe: 400195.27 },
+    { proveedor: "HM CLAUSE IBERICA S.A.U.", importe: 282962.12 },
+    { proveedor: "VILMORIN IBERICA, S.A.", importe: 275295.5 },
+    { proveedor: "SUR SEEDS S.L.", importe: 124400.0 },
+    { proveedor: "RIJK ZWAAN IBERICA, S.A.", importe: 103962.15 },
+    { proveedor: "SOTRAFA S.A.", importe: 79781.95 },
+    { proveedor: "AGROBIO", importe: 63044.82 },
+  ],
+  trend: [
+    { fecha: "04/05/2026", importe: 106992.33, cantidad: 253037.0, lineas: 37 },
+    { fecha: "05/05/2026", importe: 63088.57, cantidad: 209.0, lineas: 7 },
+    { fecha: "06/05/2026", importe: 82533.51, cantidad: 200669.0, lineas: 17 },
+    { fecha: "07/05/2026", importe: 65592.35, cantidad: 430847.0, lineas: 14 },
+    { fecha: "08/05/2026", importe: 37694.01, cantidad: 9457.0, lineas: 24 },
+    { fecha: "11/05/2026", importe: 30835.29, cantidad: 141505.0, lineas: 12 },
+    { fecha: "12/05/2026", importe: 151198.99, cantidad: 319377.0, lineas: 19 },
+    { fecha: "13/05/2026", importe: 263017.44, cantidad: 501004.0, lineas: 27 },
+    { fecha: "14/05/2026", importe: 78277.81, cantidad: 363291.0, lineas: 20 },
+    { fecha: "15/05/2026", importe: 3877.98, cantidad: 1739.5, lineas: 11 },
+    { fecha: "18/05/2026", importe: 5906.58, cantidad: 1541.0, lineas: 17 },
+    { fecha: "19/05/2026", importe: 189247.31, cantidad: 457240.0, lineas: 21 },
+    { fecha: "20/05/2026", importe: 132816.6, cantidad: 167353.0, lineas: 17 },
+    { fecha: "21/05/2026", importe: 20069.94, cantidad: 5970.0, lineas: 16 },
+    { fecha: "22/05/2026", importe: 663843.4, cantidad: 1176264.0, lineas: 25 },
+    { fecha: "23/05/2026", importe: -23.74, cantidad: -3.0, lineas: 2 },
+    { fecha: "25/05/2026", importe: 32165.13, cantidad: 8542.0, lineas: 8 },
+    { fecha: "26/05/2026", importe: 10140.26, cantidad: 71800.0, lineas: 10 },
+    { fecha: "27/05/2026", importe: 28699.11, cantidad: 67595.0, lineas: 9 },
+    { fecha: "28/05/2026", importe: 546594.76, cantidad: 786603.0, lineas: 21 },
+    { fecha: "29/05/2026", importe: 17522.0, cantidad: 10680.0, lineas: 5 },
+  ],
+  weekday: [
+    { dia: "Lunes", importe: 294222.19, cantidad: 715829.0, lineas: 48 },
+    { dia: "Martes", importe: 328307.56, cantidad: 1025590.0, lineas: 63 },
+    { dia: "Miércoles", importe: 722120.3, cantidad: 1956051.0, lineas: 66 },
+    { dia: "Jueves", importe: 801313.75, cantidad: 1336559.0, lineas: 82 },
+    { dia: "Viernes", importe: 505776.08, cantidad: 1305729.5, lineas: 70 },
+    { dia: "Sábado", importe: 0, cantidad: 0, lineas: 0 },
+    { dia: "Domingo", importe: 0, cantidad: 0, lineas: 0 },
+  ],
+  line_status: [
+    { tipo: "Líneas normales", valor: 383 },
+    { tipo: "Importe negativo", valor: 44 },
+    { tipo: "Precio cero", valor: 25 },
+    { tipo: "Cantidad negativa", valor: 44 },
+  ],
+  sign_distribution: [
+    { tipo: "Importe positivo", valor: 2682665.28 },
+    { tipo: "Importe negativo (abs)", valor: 30925.4 },
+    { tipo: "Líneas con importe cero", valor: 25 },
+  ],
+  subfamilies_top: [
+    { subfamilia: "SEMILLA PIMIENTO", importe: 1347059.97 },
+    { subfamilia: "SEMILLA TOMATE", importe: 783007.0 },
+    { subfamilia: "ABONOS SOLIDOS", importe: 85056.39 },
+    { subfamilia: "PLASTICO NORMAL", importe: 81724.84 },
+    { subfamilia: "INSECTICIDAS", importe: 79040.45 },
+    { subfamilia: "SEMILLA BERENJENA", importe: 59974.64 },
+    { subfamilia: "ABONOS FOLIARES Y MICROS.", importe: 51697.13 },
+    { subfamilia: "PLASTICO DESINFECCION", importe: 39297.23 },
+  ],
+  products_top_importe: [], products_top_qty: [], scatter_family: [], pareto_suppliers: [], treemap: [], sample_rows: [], razon_social_top: [], warehouse_importe: [{ almacen: "SUMINISTROS I", importe: 2651739.88 }]
+};
+
+const fmtMoney = (n) => new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", maximumFractionDigits: 2 }).format(Number(n || 0));
+const fmtNum = (n) => new Intl.NumberFormat("es-ES", { maximumFractionDigits: 2 }).format(Number(n || 0));
+const shortLabel = (s, max = 18) => (String(s).length > max ? `${String(s).slice(0, max)}…` : String(s));
+
+function KPICard({ title, value, icon: Icon, hint, tone = "emerald" }) {
+  const toneMap = {
+    emerald: "from-emerald-500/20 to-emerald-700/5 border-emerald-400/20",
+    blue: "from-blue-500/20 to-blue-700/5 border-blue-400/20",
+    purple: "from-purple-500/20 to-purple-700/5 border-purple-400/20",
+    amber: "from-amber-400/20 to-amber-700/5 border-amber-400/20",
+    rose: "from-rose-500/20 to-rose-700/5 border-rose-400/20",
+  };
+  return (
+    <Card className={`bg-gradient-to-br ${toneMap[tone]} border text-white rounded-3xl shadow-xl`} style={{ backgroundColor: CARD }}>
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm text-slate-300">{title}</p>
+            <p className="mt-2 text-3xl font-semibold tracking-tight">{value}</p>
+            <p className="mt-2 text-xs text-slate-400">{hint}</p>
+          </div>
+          <div className="rounded-2xl bg-white/10 p-3">
+            <Icon className="h-6 w-6" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ChartCard({ title, subtitle, actions, children }) {
+  return (
+    <Card className="rounded-3xl border border-white/10 shadow-2xl" style={{ backgroundColor: CARD, color: TEXT }}>
+      <CardHeader className="pb-0">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+            {subtitle ? <p className="mt-1 text-sm text-slate-400">{subtitle}</p> : null}
+          </div>
+          {actions}
+        </div>
+      </CardHeader>
+      <CardContent className="pt-4">{children}</CardContent>
+    </Card>
+  );
+}
+
+function CustomTooltip({ active, payload, label }) {
+  if (!active || !payload || !payload.length) return null;
+  return (
+    <div className="rounded-2xl border border-white/10 bg-slate-900/95 p-3 text-sm text-white shadow-2xl">
+      {label ? <div className="mb-2 font-medium text-slate-200">{label}</div> : null}
+      <div className="space-y-1">
+        {payload.map((item, idx) => (
+          <div key={idx} className="flex items-center justify-between gap-3">
+            <span className="text-slate-300">{item.name}</span>
+            <span style={{ color: item.color || "white" }} className="font-medium">{typeof item.value === "number" ? fmtNum(item.value) : item.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function DashboardComprasPowerBI() {
+  const [data, setData] = useState(FALLBACK);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+  const [section, setSection] = useState("resumen");
+
+  useEffect(() => {
+    let isMounted = true;
+    fetch(DATA_URL)
+      .then((r) => {
+        if (!r.ok) throw new Error("No se pudo cargar el JSON del análisis");
+        return r.json();
+      })
+      .then((json) => {
+        if (isMounted) {
+          setData(json);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setError("Se ha cargado la versión de respaldo del dashboard. Si el JSON remoto se bloquea, seguirás viendo las gráficas principales.");
+          setLoading(false);
+        }
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return data;
+    const filterArr = (arr, key) => (arr || []).filter((x) => String(x[key] || "").toLowerCase().includes(q));
+    return {
+      ...data,
+      families: filterArr(data.families, "familia"),
+      subfamilies_top: filterArr(data.subfamilies_top, "subfamilia"),
+      suppliers_top: filterArr(data.suppliers_top, "proveedor"),
+      razon_social_top: filterArr(data.razon_social_top, "razon_social"),
+      products_top_importe: filterArr(data.products_top_importe, "descripcion"),
+      products_top_qty: filterArr(data.products_top_qty, "descripcion"),
+      sample_rows: (data.sample_rows || []).filter(
+        (x) =>
+          String(x.descripcion || "").toLowerCase().includes(q) ||
+          String(x.proveedor || "").toLowerCase().includes(q) ||
+          String(x.familia || "").toLowerCase().includes(q) ||
+          String(x.subfamilia || "").toLowerCase().includes(q)
+      ),
+    };
+  }, [data, query]);
+
+  const pareto = useMemo(() => {
+    if ((data.pareto_suppliers || []).length) return data.pareto_suppliers;
+    let total = (data.suppliers_top || []).reduce((a, b) => a + Number(b.importe || 0), 0);
+    let acc = 0;
+    return (data.suppliers_top || []).map((x) => {
+      acc += Number(x.importe || 0);
+      return { proveedor: x.proveedor, importe: x.importe, acumulado_pct: total ? +(acc / total * 100).toFixed(2) : 0 };
+    });
+  }, [data]);
+
+  const scatter = useMemo(() => {
+    if ((data.scatter_family || []).length) return data.scatter_family;
+    return (data.families || []).map((x) => ({ familia: x.familia, cantidad: x.cantidad, importe: x.importe, precio_medio: x.cantidad ? x.importe / x.cantidad : 0 }));
+  }, [data]);
+
+  const sections = [
+    ["resumen", "Resumen"],
+    ["tendencia", "Tendencia"],
+    ["categorias", "Categorías"],
+    ["proveedores", "Proveedores"],
+    ["productos", "Productos"],
+    ["calidad", "Calidad del dato"],
+    ["detalle", "Detalle"],
+  ];
+
+  return (
+    <div className="min-h-screen w-full p-4 md:p-6" style={{ background: `radial-gradient(circle at top left, #16203a 0%, ${BG} 45%, #050816 100%)` }}>
+      <div className="mx-auto max-w-7xl space-y-6">
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-2xl backdrop-blur">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="flex items-center gap-3">
+                <div className="rounded-2xl bg-emerald-500/15 p-3 text-emerald-300"><BarChart3 className="h-7 w-7" /></div>
+                <div>
+                  <h1 className="text-2xl font-semibold tracking-tight text-white md:text-3xl">Compras · Simulación Power BI</h1>
+                  <p className="mt-1 text-sm text-slate-300">Dashboard interactivo generado a partir de <span className="font-medium text-white">albaranes_compras.xls</span></p>
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Badge className="rounded-full bg-blue-500/15 text-blue-200 hover:bg-blue-500/15">{fmtNum(data.metrics?.filas)} líneas</Badge>
+                <Badge className="rounded-full bg-purple-500/15 text-purple-200 hover:bg-purple-500/15">{fmtNum(data.metrics?.familias)} familias</Badge>
+                <Badge className="rounded-full bg-amber-500/15 text-amber-100 hover:bg-amber-500/15">{fmtNum(data.metrics?.proveedores)} proveedores</Badge>
+                <Badge className="rounded-full bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/15">{fmtNum(data.metrics?.dias)} días con movimiento</Badge>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 md:flex-row md:items-center">
+              <div className="relative min-w-[280px]">
+                <Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar familia, producto o proveedor..." className="rounded-2xl border-white/10 bg-slate-900/70 pl-9 text-white placeholder:text-slate-500" />
+              </div>
+              <Button variant="outline" className="rounded-2xl border-white/10 bg-white/5 text-white hover:bg-white/10" onClick={() => window.location.reload()}>
+                <RefreshCcw className="mr-2 h-4 w-4" /> Recargar
+              </Button>
+              <Button className="rounded-2xl bg-emerald-500 text-slate-950 hover:bg-emerald-400" onClick={() => {
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = 'dashboard_albaranes_resumen.json'; a.click();
+                URL.revokeObjectURL(url);
+              }}>
+                <Download className="mr-2 h-4 w-4" /> Exportar JSON
+              </Button>
+            </div>
+          </div>
+          {error ? <div className="mt-4 rounded-2xl border border-amber-300/15 bg-amber-400/10 p-3 text-sm text-amber-100">{error}</div> : null}
+          {loading ? <div className="mt-4 text-sm text-slate-400">Cargando datos del análisis…</div> : null}
+        </motion.div>
+
+        <div className="flex flex-wrap gap-2">
+          {sections.map(([key, label]) => (
+            <Button key={key} onClick={() => setSection(key)} className={`rounded-2xl ${section === key ? 'bg-white text-slate-950 hover:bg-white' : 'bg-white/5 text-white hover:bg-white/10'} border border-white/10`}>
+              {label}
+            </Button>
+          ))}
+        </div>
+
+        {(section === "resumen" || section === "tendencia" || section === "categorias" || section === "proveedores" || section === "productos" || section === "calidad" || section === "detalle") && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <KPICard title="Importe total" value={fmtMoney(data.metrics?.importe_total)} icon={TrendingUp} hint="Suma de todas las líneas válidas" tone="emerald" />
+            <KPICard title="Cantidad total" value={fmtNum(data.metrics?.cantidad_total)} icon={Boxes} hint="Suma de cantidades" tone="blue" />
+            <KPICard title="Precio medio" value={fmtMoney(data.metrics?.precio_medio_simple)} icon={Package} hint="Media simple del precio unitario" tone="purple" />
+            <KPICard title="Proveedores" value={fmtNum(data.metrics?.proveedores)} icon={Truck} hint="Casas comerciales distintas" tone="amber" />
+            <KPICard title="Anomalías" value={fmtNum((data.metrics?.lineas_negativas || 0) + (data.metrics?.lineas_precio_cero || 0))} icon={AlertTriangle} hint="Negativos + precios a cero" tone="rose" />
+          </div>
+        )}
+
+        {(section === "resumen" || section === "categorias") && (
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            <ChartCard title="Importe por familia" subtitle="Barras horizontales para ver qué categoría concentra el gasto">
+              <div className="h-[380px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={filtered.families} layout="vertical" margin={{ left: 24, right: 12, top: 10, bottom: 10 }}>
+                    <CartesianGrid stroke={GRID} horizontal={false} />
+                    <XAxis type="number" stroke={MUTED} tickFormatter={fmtNum} />
+                    <YAxis type="category" dataKey="familia" stroke={MUTED} width={120} tickFormatter={(v) => shortLabel(v, 14)} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="importe" name="Importe" radius={[0, 10, 10, 0]} fill="#22c55e" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+
+            <ChartCard title="Participación del gasto por familia" subtitle="Formato tipo donut, muy habitual en paneles ejecutivos">
+              <div className="h-[380px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={filtered.families} dataKey="importe" nameKey="familia" innerRadius={80} outerRadius={130} paddingAngle={2}>
+                      {(filtered.families || []).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend wrapperStyle={{ color: TEXT }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+
+            <ChartCard title="Cantidad por familia" subtitle="Te ayuda a comparar volumen frente a coste">
+              <div className="h-[360px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={filtered.families}>
+                    <CartesianGrid stroke={GRID} />
+                    <XAxis dataKey="familia" stroke={MUTED} tickFormatter={(v) => shortLabel(v, 10)} angle={-20} textAnchor="end" height={75} />
+                    <YAxis stroke={MUTED} tickFormatter={fmtNum} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="cantidad" name="Cantidad" radius={[10, 10, 0, 0]} fill="#3b82f6" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+
+            <ChartCard title="Mapa jerárquico familias → subfamilias" subtitle="Treemap para ver concentración del importe en un solo vistazo">
+              <div className="h-[360px] overflow-hidden rounded-2xl">
+                <ResponsiveContainer width="100%" height="100%">
+                  <Treemap data={data.treemap && data.treemap.length ? data.treemap : [{ name: 'Familias', children: (filtered.subfamilies_top || []).map((x) => ({ name: x.subfamilia, size: x.importe })) }]} dataKey="size" stroke="#0f172a" fill="#14b8a6" />
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+          </div>
+        )}
+
+        {(section === "tendencia" || section === "resumen") && (
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            <ChartCard title="Importe diario" subtitle="Evolución día a día del gasto">
+              <div className="h-[360px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={data.trend}>
+                    <CartesianGrid stroke={GRID} />
+                    <XAxis dataKey="fecha" stroke={MUTED} angle={-25} textAnchor="end" height={70} />
+                    <YAxis stroke={MUTED} tickFormatter={fmtNum} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Line type="monotone" dataKey="importe" name="Importe" stroke="#22c55e" strokeWidth={3} dot={{ r: 3 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+
+            <ChartCard title="Cantidad diaria" subtitle="Área acumulada para visualizar volumen de compra">
+              <div className="h-[360px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={data.trend}>
+                    <defs>
+                      <linearGradient id="cantidadFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#60a5fa" stopOpacity={0.8} />
+                        <stop offset="95%" stopColor="#60a5fa" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid stroke={GRID} />
+                    <XAxis dataKey="fecha" stroke={MUTED} angle={-25} textAnchor="end" height={70} />
+                    <YAxis stroke={MUTED} tickFormatter={fmtNum} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Area type="monotone" dataKey="cantidad" name="Cantidad" stroke="#60a5fa" fill="url(#cantidadFill)" strokeWidth={2.5} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+
+            <ChartCard title="Importe, cantidad y número de líneas" subtitle="Vista combinada para comparar intensidad y actividad">
+              <div className="h-[380px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={data.trend}>
+                    <CartesianGrid stroke={GRID} />
+                    <XAxis dataKey="fecha" stroke={MUTED} angle={-25} textAnchor="end" height={70} />
+                    <YAxis yAxisId="left" stroke={MUTED} tickFormatter={fmtNum} />
+                    <YAxis yAxisId="right" orientation="right" stroke={MUTED} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    <Bar yAxisId="left" dataKey="cantidad" name="Cantidad" barSize={18} fill="#3b82f6" radius={[6, 6, 0, 0]} />
+                    <Line yAxisId="left" type="monotone" dataKey="importe" name="Importe" stroke="#22c55e" strokeWidth={2.5} />
+                    <Line yAxisId="right" type="monotone" dataKey="lineas" name="Líneas" stroke="#f59e0b" strokeWidth={2.5} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+
+            <ChartCard title="Patrón por día de la semana" subtitle="Radar para identificar concentración temporal">
+              <div className="h-[380px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart data={data.weekday}>
+                    <PolarGrid stroke={GRID} />
+                    <PolarAngleAxis dataKey="dia" stroke={MUTED} />
+                    <PolarRadiusAxis stroke={MUTED} tickFormatter={fmtNum} />
+                    <Radar dataKey="importe" name="Importe" stroke="#a855f7" fill="#a855f7" fillOpacity={0.45} />
+                    <Tooltip content={<CustomTooltip />} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+          </div>
+        )}
+
+        {(section === "proveedores" || section === "resumen") && (
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            <ChartCard title="Top proveedores por importe" subtitle="Ranking principal de casas comerciales">
+              <div className="h-[420px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={filtered.suppliers_top.slice(0, 12)} layout="vertical" margin={{ left: 24, right: 12 }}>
+                    <CartesianGrid stroke={GRID} horizontal={false} />
+                    <XAxis type="number" stroke={MUTED} tickFormatter={fmtNum} />
+                    <YAxis type="category" dataKey="proveedor" width={170} stroke={MUTED} tickFormatter={(v) => shortLabel(v, 24)} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="importe" name="Importe" fill="#14b8a6" radius={[0, 10, 10, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+
+            <ChartCard title="Pareto de proveedores" subtitle="Barras de importe y línea de acumulado % para detectar concentración">
+              <div className="h-[420px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={pareto.slice(0, 12)}>
+                    <CartesianGrid stroke={GRID} />
+                    <XAxis dataKey="proveedor" stroke={MUTED} tickFormatter={(v) => shortLabel(v, 14)} angle={-25} textAnchor="end" height={90} />
+                    <YAxis yAxisId="left" stroke={MUTED} tickFormatter={fmtNum} />
+                    <YAxis yAxisId="right" orientation="right" stroke={MUTED} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    <Bar yAxisId="left" dataKey="importe" name="Importe" fill="#06b6d4" radius={[8, 8, 0, 0]} />
+                    <Line yAxisId="right" type="monotone" dataKey="acumulado_pct" name="Acumulado %" stroke="#f59e0b" strokeWidth={3} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+
+            <ChartCard title="Razón social / centro contable" subtitle="Otra vista útil para conciliación y análisis interno">
+              <div className="h-[360px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={filtered.razon_social_top.slice(0, 10)}>
+                    <CartesianGrid stroke={GRID} />
+                    <XAxis dataKey="razon_social" stroke={MUTED} tickFormatter={(v) => shortLabel(v, 14)} angle={-20} textAnchor="end" height={90} />
+                    <YAxis stroke={MUTED} tickFormatter={fmtNum} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="importe" name="Importe" fill="#8b5cf6" radius={[10, 10, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+
+            <ChartCard title="Almacén" subtitle="El archivo solo muestra un almacén, pero dejo la visual para mantener el estilo Power BI">
+              <div className="h-[360px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={data.warehouse_importe || []} dataKey="importe" nameKey="almacen" innerRadius={70} outerRadius={120}>
+                      {(data.warehouse_importe || []).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+          </div>
+        )}
+
+        {(section === "productos" || section === "categorias" || section === "resumen") && (
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            <ChartCard title="Top subfamilias" subtitle="Importe agregado de las subfamilias más relevantes">
+              <div className="h-[420px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={filtered.subfamilies_top.slice(0, 12)} layout="vertical" margin={{ left: 20, right: 12 }}>
+                    <CartesianGrid stroke={GRID} horizontal={false} />
+                    <XAxis type="number" stroke={MUTED} tickFormatter={fmtNum} />
+                    <YAxis type="category" dataKey="subfamilia" width={170} stroke={MUTED} tickFormatter={(v) => shortLabel(v, 24)} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="importe" name="Importe" fill="#f97316" radius={[0, 10, 10, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+
+            <ChartCard title="Dispersión familia: cantidad vs importe" subtitle="Sirve para detectar categorías con mucho volumen y poco coste, o al revés">
+              <div className="h-[420px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 10 }}>
+                    <CartesianGrid stroke={GRID} />
+                    <XAxis type="number" dataKey="cantidad" name="Cantidad" stroke={MUTED} tickFormatter={fmtNum} />
+                    <YAxis type="number" dataKey="importe" name="Importe" stroke={MUTED} tickFormatter={fmtNum} />
+                    <Tooltip cursor={{ strokeDasharray: '3 3' }} formatter={(v, n) => [fmtNum(v), n]} content={<CustomTooltip />} />
+                    <Scatter data={scatter} fill="#22c55e" />
+                  </ScatterChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+
+            <ChartCard title="Top productos por importe" subtitle="Qué referencias acumulan más gasto">
+              <div className="h-[420px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={(filtered.products_top_importe || []).slice(0, 12)}>
+                    <CartesianGrid stroke={GRID} />
+                    <XAxis dataKey="descripcion" stroke={MUTED} tickFormatter={(v) => shortLabel(v, 12)} angle={-25} textAnchor="end" height={95} interval={0} />
+                    <YAxis stroke={MUTED} tickFormatter={fmtNum} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="importe" name="Importe" fill="#ef4444" radius={[10, 10, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+
+            <ChartCard title="Top productos por cantidad" subtitle="Qué referencias concentran más volumen">
+              <div className="h-[420px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={(filtered.products_top_qty || []).slice(0, 12)}>
+                    <CartesianGrid stroke={GRID} />
+                    <XAxis dataKey="descripcion" stroke={MUTED} tickFormatter={(v) => shortLabel(v, 12)} angle={-25} textAnchor="end" height={95} interval={0} />
+                    <YAxis stroke={MUTED} tickFormatter={fmtNum} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="cantidad" name="Cantidad" fill="#84cc16" radius={[10, 10, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+          </div>
+        )}
+
+        {(section === "calidad" || section === "resumen") && (
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            <ChartCard title="Estado de las líneas" subtitle="Lectura rápida de calidad del dato y ajustes">
+              <div className="h-[360px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={data.line_status} dataKey="valor" nameKey="tipo" innerRadius={70} outerRadius={120}>
+                      {(data.line_status || []).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+
+            <ChartCard title="Peso de positivos, negativos y líneas a cero" subtitle="Útil para identificar regularizaciones y posibles revisiones">
+              <div className="h-[360px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.sign_distribution}>
+                    <CartesianGrid stroke={GRID} />
+                    <XAxis dataKey="tipo" stroke={MUTED} tickFormatter={(v) => shortLabel(v, 14)} />
+                    <YAxis stroke={MUTED} tickFormatter={fmtNum} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="valor" name="Valor" radius={[10, 10, 0, 0]} fill="#f59e0b" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+          </div>
+        )}
+
+        {(section === "detalle" || section === "resumen") && (
+          <ChartCard title="Muestra de líneas con mayor importe" subtitle="Tabla estilo matriz para revisar detalle y cruzar con las gráficas">
+            <div className="overflow-auto rounded-2xl border border-white/10">
+              <table className="min-w-full text-left text-sm">
+                <thead className="bg-white/5 text-slate-300">
+                  <tr>
+                    {['Fecha', 'Descripción', 'Familia', 'Subfamilia', 'Proveedor', 'Cantidad', 'Precio', 'Importe'].map((h) => (
+                      <th key={h} className="px-4 py-3 font-medium">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {(filtered.sample_rows || []).slice(0, 20).map((row, i) => (
+                    <tr key={i} className="border-t border-white/5 hover:bg-white/[0.03]">
+                      <td className="px-4 py-3 text-slate-300">{row.fecha}</td>
+                      <td className="px-4 py-3 text-white">{row.descripcion}</td>
+                      <td className="px-4 py-3 text-slate-200">{row.familia}</td>
+                      <td className="px-4 py-3 text-slate-300">{row.subfamilia}</td>
+                      <td className="px-4 py-3 text-slate-300">{row.proveedor}</td>
+                      <td className="px-4 py-3 text-slate-200">{fmtNum(row.cantidad)}</td>
+                      <td className="px-4 py-3 text-slate-200">{fmtMoney(row.precio)}</td>
+                      <td className="px-4 py-3 font-medium text-emerald-300">{fmtMoney(row.importe)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </ChartCard>
+        )}
+      </div>
+    </div>
+  );
+}
